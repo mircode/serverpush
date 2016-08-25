@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket</title>
+</head>
+<body>
+    <div id="mess"></div>
+    <input type="button" id="send" value="发送消息" />
+
+    <script>
+    
+   	window.addEventListener("load", function() {
+        var mess = document.getElementById("mess");
+        var send = document.getElementById("send");
+        
+        if(window.WebSocket){
+            var ws = new WebSocket('ws://127.0.0.1:8001');
+
+            ws.onopen = function(e){
+                console.log("连接服务器成功");
+                ws.send("连接服务器成功：hello server");
+            }
+            ws.onclose = function(e){
+                console.log("服务器关闭");
+            }
+            ws.onerror = function(){
+                console.log("连接出错");
+            }
+
+            ws.onmessage = function(e){
+                mess.innerHTML += e.data+'<br>';
+            }
+        }
+        
+        
+        send.onclick = (function(){
+        	var i=0;
+        	return function(e){
+	            		var time = new Date();
+	            		ws.send(time.toLocaleString()+": 点击"+i++);
+	           		}
+        })();
+     });
+    </script>
+</body>
+</html>

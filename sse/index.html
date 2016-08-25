@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Server-Sent Events 示例</title>
+  <meta charset="UTF-8" />
+  <script>
+    window.addEventListener("load", function() {
+    	
+      // DOM对象
+      var button = document.getElementById("connect");
+      var status = document.getElementById("status");
+      var output = document.getElementById("output");
+      var connectTime = document.getElementById("connecttime");
+      
+      
+      var source;
+
+      function connect() {
+        source = new EventSource("stream");
+        
+        // 如果Server不指定event事件类型,则调用默认的onmessage回调
+        source.addEventListener("message", function(event) {
+          output.textContent = "服务器时间："+format(event.data);
+        }, false);
+
+		// 接受connectiontime事件消息
+        source.addEventListener("connecttime", function(event) {
+          connectTime.textContent = "连接建立: " + format(event.data);
+        }, false);
+
+		// 打开连接
+        source.addEventListener("open", function(event) {
+          button.value = "关闭连接";
+          button.onclick = function(event) {
+            source.close();
+            button.value = "打开连接";
+            button.onclick = connect;
+            status.textContent = "连接关闭!";
+          };
+          status.textContent = "连接打开!";
+        }, false);
+
+		// 管理连接
+        source.addEventListener("error", function(event) {
+          if (event.target.readyState === EventSource.CLOSED) {
+            source.close();
+            status.textContent = "连接关闭!";
+          } else if (event.target.readyState === EventSource.CONNECTING) {
+            status.textContent = "连接关闭,尝试重新链接!";
+          } else {
+            status.textContent = "连接关闭,未知错误";
+          }
+        }, false);
+      }
+
+      if (!!window.EventSource) {
+        connect();
+      } else {
+        button.style.display = "none";
+        status.textContent = "对不起, 你的浏览器不支持 server-sent events";
+      }
+    }, false);
+    
+    // 格式化日期
+    function format(str){
+      var date=new Date(str);
+    	
+	  var fmt='yyyy-MM-dd HH:mm:ss'; 
+	  var o = {   
+        "M+" : date.getMonth()+1,                 //月份   
+        "d+" : date.getDate(),                    //日   
+        "H+" : date.getHours(),                   //小时   
+        "m+" : date.getMinutes(),                 //分   
+        "s+" : date.getSeconds(),                 //秒   
+        "q+" : Math.floor((date.getMonth()+3)/3), //季度   
+        "S"  : date.getMilliseconds()             //毫秒   
+      };   
+      if(/(y+)/.test(fmt))   
+        fmt=fmt.replace(RegExp.$1, (date.getFullYear()+"").substr(4 - RegExp.$1.length));   
+      for(var k in o){  
+         if(new RegExp("("+ k +")").test(fmt)){   
+            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));   
+         }
+        
+      }
+      return fmt;   
+    }
+  </script>
+</head>
+<body>
+  <input type="button" id="connect" value="打开连接" /><br />
+  <span id="status">连接关闭!</span><br />
+  <span id="connecttime"></span><br />
+  <span id="output"></span>
+</body>
+</html>
